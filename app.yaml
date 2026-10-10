@@ -1,0 +1,15 @@
+runtime: php82
+env: standard
+instance_class: F1
+
+env_variables:
+  APP_ENGINE: true
+  APP_ENV: production
+  APP_KEY: "base64:UrINViYLlSBihjRx1A1zbPA5vKEwyDBNKVctGG++isc="
+  LOG_CHANNEL: stack
+  DB_CONNECTION: sqlite
+  DB_DATABASE: /tmp/database.sqlite
+
+handlers:
+  - url: /
+    script: auto
