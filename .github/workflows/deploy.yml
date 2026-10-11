@@ -1,0 +1,44 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches:
+      - main  # Change to 'master' if your main branch is named master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to GCP VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_VM_HOST }}
+          username: ${{ secrets.GCP_VM_USERNAME }}
+          key: ${{ secrets.GCP_VM_SSH_KEY }}
+          script: |
+            cd /var/www/html/gcp-laravel-cicd
+            
+            # Fetch latest changes
+            git pull origin main
+            
+            # Install composer dependencies
+            composer install --no-dev --optimize-autoloader
+            
+            # Run database migrations
+            php artisan migrate --force
+            
+            # Optimize caches
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            # Ensure correct storage permissions
+            sudo chown -R ragavudev:www-data storage bootstrap/cache
+            sudo chmod -R 775 storage bootstrap/cache
+            
+            # Reload Nginx / PHP-FPM if necessary
+            sudo systemctl reload php8.5-fpm
