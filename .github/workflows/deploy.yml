@@ -3,7 +3,7 @@ name: Deploy to GCP VM
 on:
   push:
     branches:
-      - main  # Change to 'master' if your main branch is named master
+      - main
 
 jobs:
   deploy:
@@ -20,10 +20,12 @@ jobs:
           username: ${{ secrets.GCP_VM_USERNAME }}
           key: ${{ secrets.GCP_VM_SSH_KEY }}
           script: |
+            git config --global --add safe.directory /var/www/html/gcp-laravel-cicd
             cd /var/www/html/gcp-laravel-cicd
             
-            # Fetch latest changes
-            git pull origin main
+            # Fetch and force reset to origin/main
+            git fetch origin main
+            git reset --hard origin/main
             
             # Install composer dependencies
             composer install --no-dev --optimize-autoloader
@@ -36,9 +38,9 @@ jobs:
             php artisan route:cache
             php artisan view:cache
             
-            # Ensure correct storage permissions
-            sudo chown -R ragavudev:www-data storage bootstrap/cache
-            sudo chmod -R 775 storage bootstrap/cache
+            # Restore permissions
+            sudo chown -R ragavudev:www-data storage bootstrap/cache database
+            sudo chmod -R 775 storage bootstrap/cache database
             
-            # Reload Nginx / PHP-FPM if necessary
+            # Reload services
             sudo systemctl reload php8.5-fpm
